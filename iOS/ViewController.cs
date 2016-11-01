@@ -21,6 +21,7 @@ namespace HansWehr.iOS
             {
                 var words = Dictionary.Query(SearchBar.Text).ToList();
                 ResultList.DataSource = new WordListDataSource { Words = words };
+                ResultList.ReloadData();
             };
         }
 
