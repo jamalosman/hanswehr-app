@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UIKit;
 
@@ -6,7 +7,7 @@ namespace HansWehr.iOS
 {
     public partial class ViewController : UIViewController
     {
-        int count = 1;
+		static Dictionary HansWehr = new Dictionary();
 
         public ViewController(IntPtr handle) : base(handle)
         {
@@ -19,8 +20,9 @@ namespace HansWehr.iOS
             // Perform any additional setup after loading the view, typically from a nib.
             SearchBar.SearchButtonClicked += (sender, e) =>
             {
-                var words = Dictionary.Query(SearchBar.Text).ToList();
-                ResultList.DataSource = new WordListDataSource { Words = words };
+				var words = HansWehr.Query(SearchBar.Text).ToList();
+                ResultList.Source = new WordListDataSource { Words = words };
+				Add(ResultList);
             };
         }
 

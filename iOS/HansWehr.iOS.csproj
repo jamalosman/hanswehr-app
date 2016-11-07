@@ -92,6 +92,10 @@
       <HintPath>..\..\Xamarin\Xamarin-Lucene.Net\bin\Release\Lucene.Xamarin.iOS.dll</HintPath>
     </Reference>
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="Lucene.Xamarin.iOS">
+      <HintPath>..\lib\Lucene.Xamarin.iOS.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoTouch.Dialog-1" />
   </ItemGroup>
   <ItemGroup>
     <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\Contents.json" />

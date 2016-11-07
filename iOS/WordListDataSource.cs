@@ -5,7 +5,7 @@ using UIKit;
 
 namespace HansWehr.iOS
 {
-    public class WordListDataSource : UITableViewDataSource
+    public class WordListDataSource : UITableViewSource
     {
         string CellIdentifier = "WordCell";
 
@@ -15,12 +15,12 @@ namespace HansWehr.iOS
         public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
         {
             UITableViewCell cell = tableView.DequeueReusableCell(CellIdentifier) 
-                                            ?? new UITableViewCell(UITableViewCellStyle.Subtitle, CellIdentifier);
+			                                ?? new UITableViewCell(UITableViewCellStyle.Subtitle, CellIdentifier);
             var word = Words[indexPath.Row];
             cell.TextLabel.Text = word.ArabicWord;
             cell.DetailTextLabel.Text = word.Definition;
 
-            return new UITableViewCell(UITableViewCellStyle.Subtitle, word.ArabicWord);
+			return cell;
         }
 
         public override nint RowsInSection(UITableView tableView, nint section)

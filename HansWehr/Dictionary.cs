@@ -6,6 +6,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using Lucene.Net.Analysis.Standard;
+using Store = Lucene.Net.Store;
 using Lucene.Net.Store;
 using Lucene.Net.Index;
 using Lucene.Net.Documents;
@@ -18,19 +19,25 @@ namespace HansWehr
 {
     public class Dictionary
     {
+		string HansWehrPath = Path.Combine(NSBundle.MainBundle.BundlePath, "hanswehr.xml");
+		string IndexPath = Path.Combine(NSBundle.MainBundle.BundlePath, "index");
+		Store.Directory IndexDirectory;
 
-        private static XDocument GetDictionary()
+		public Dictionary()
+		{
+			BuildIndex();
+		}
+
+		private XDocument GetDictionary()
         {
             var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
+            string fileName = ""; // remember case-sensitive
 
-            string fileName = "hanswehr.xml"; // remember case-sensitive
-            string path = Path.Combine(NSBundle.MainBundle.BundlePath, fileName);
-
-            var xmlString = File.ReadAllText(path);
+            var xmlString = File.ReadAllText(HansWehrPath);
             return XDocument.Parse(xmlString);
         }
 
-        public static IEnumerable<Word> GetWords()
+        public IEnumerable<Word> GetWords()
         {
             return
                 GetDictionary()
@@ -43,10 +50,10 @@ namespace HansWehr
                 });
         }
 
-        private static RAMDirectory BuildIndex()
+		private void BuildIndex()
         {
             var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-            var indexDirectory = new RAMDirectory();
+			var indexDirectory = new SimpleFSDirectory(new DirectoryInfo(IndexPath));
             var writer = new IndexWriter(indexDirectory, analyzer, IndexWriter.MaxFieldLength.LIMITED);
             var dictionary = GetWords();
 
@@ -61,18 +68,17 @@ namespace HansWehr
             writer.Optimize();
             writer.Commit();
             writer.Dispose();
-            return indexDirectory;
+            IndexDirectory = indexDirectory;
         }
 
-        public static IEnumerable<Word> Query(string queryString, int limit = 50)
+        public IEnumerable<Word> Query(string queryString, int limit = 50)
         {
             var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
             var parser = new QueryParser(Lucene.Net.Util.Version.LUCENE_30, "Definition", analyzer);
             var query = parser.Parse(queryString);
-            var indexDirectory = BuildIndex();
             var data = new List<Word>();
 
-            using (var searcher = new IndexSearcher(indexDirectory))
+            using (var searcher = new IndexSearcher(IndexDirectory))
             {
                 var hits = searcher.Search(query, limit);
                 Debug.WriteLine(hits.TotalHits + " result(s) found for query: " + query.ToString());

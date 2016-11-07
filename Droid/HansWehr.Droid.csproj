@@ -46,6 +46,9 @@
     <Reference Include="Lucene.Xamarin.iOS">
       <HintPath>..\..\Xamarin\Xamarin-Lucene.Net\bin\Release\Lucene.Xamarin.iOS.dll</HintPath>
     </Reference>
+    <Reference Include="Lucene.Xamarin.iOS">
+      <HintPath>..\lib\Lucene.Xamarin.iOS.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainActivity.cs" />
