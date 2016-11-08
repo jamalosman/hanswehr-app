@@ -22,7 +22,7 @@ namespace HansWehr.iOS
             {
 				var words = HansWehr.Query(SearchBar.Text).ToList();
                 ResultList.Source = new WordListDataSource { Words = words };
-				Add(ResultList);
+				ResultList.ReloadData();
             };
         }
 
