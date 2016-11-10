@@ -13,28 +13,92 @@ using Lucene.Net.Documents;
 using Lucene.Net.Search;
 using System.Diagnostics;
 using Lucene.Net.QueryParsers;
-using Foundation;
 
 namespace HansWehr
 {
     public class Dictionary
     {
-		string HansWehrPath = Path.Combine(NSBundle.MainBundle.BundlePath, "hanswehr.xml");
-		string IndexPath = Path.Combine(NSBundle.MainBundle.BundlePath, "index");
+        static string AppFolder { 
+            get { return Environment.GetFolderPath(Environment.SpecialFolder.Personal); }
+        }
+
+        string HansWehrPath = Path.Combine(AppFolder, "hanswehr.xml");
+		string IndexPath = Path.Combine(AppFolder, "index");
 		Store.Directory IndexDirectory;
 
-		public Dictionary()
+        private Dictionary _instance;
+        public Dictionary Instance
+        {
+            get { return _instance ?? new Dictionary(); }
+        }
+
+		private Dictionary()
 		{
-			BuildIndex();
+            IndexDirectory = BuildIndex();
 		}
 
-		private XDocument GetDictionary()
+        private Store.Directory GetIndex()
         {
-            var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
-            string fileName = ""; // remember case-sensitive
+            try
+            {
+                return FSDirectory.Open(IndexPath);
+            }
+            catch (NotImplementedException ex) // want to find out what exception will get thrown
+            {
+                return null;
+            }
+        }
 
-            var xmlString = File.ReadAllText(HansWehrPath);
-            return XDocument.Parse(xmlString);
+        private Store.Directory BuildIndex()
+        {
+            var dictionary = GetWords();
+            var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
+            var indexDirectory = new SimpleFSDirectory(new DirectoryInfo(IndexPath));
+            var writer = new IndexWriter(indexDirectory, analyzer, IndexWriter.MaxFieldLength.LIMITED);
+
+            foreach (var word in dictionary)
+            {
+                Document doc = new Document();
+                doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
+                writer.AddDocument(doc);
+            }
+
+            writer.Optimize();
+            writer.Commit();
+            writer.Dispose();
+            return indexDirectory;
+        }
+
+        private XDocument GetDictionary()
+        {
+            return GetDictionaryFromFile() ?? GetDictionaryFromResource();
+        }
+
+		private XDocument GetDictionaryFromResource()
+        {
+            
+            var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
+            var stream = assembly.GetManifestResourceStream(assembly.GetName().ToString().Split(',')[0]+".hanswehr.xml");
+            Debug.WriteLine(string.Join(",",assembly.GetManifestResourceNames()));
+            Debug.WriteLine(assembly.GetName().ToString().Split(',')[0] + ".hanswehr.xml");
+                    
+            return XDocument.Load(stream);
+
+            //var xmlString = File.ReadAllText(HansWehrPath);
+            //return XDocument.Parse(xmlString);
+        }
+        private XDocument GetDictionaryFromFile()
+        {
+            try
+            {
+                var xmlString = File.ReadAllText(HansWehrPath);
+                return XDocument.Parse(xmlString);
+            }
+            catch (NotImplementedException ex) // want to find out what exception will get thrown
+            {
+                return null;
+            }
         }
 
         public IEnumerable<Word> GetWords()
@@ -50,26 +114,7 @@ namespace HansWehr
                 });
         }
 
-		private void BuildIndex()
-        {
-            var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-			var indexDirectory = new SimpleFSDirectory(new DirectoryInfo(IndexPath));
-            var writer = new IndexWriter(indexDirectory, analyzer, IndexWriter.MaxFieldLength.LIMITED);
-            var dictionary = GetWords();
 
-            foreach (var word in dictionary)
-            {
-                Document doc = new Document();
-                doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
-                doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
-                writer.AddDocument(doc);
-            }
-
-            writer.Optimize();
-            writer.Commit();
-            writer.Dispose();
-            IndexDirectory = indexDirectory;
-        }
 
         public IEnumerable<Word> Query(string queryString, int limit = 50)
         {
@@ -92,7 +137,9 @@ namespace HansWehr
                     });
                 }
             }
-            return data;
+            return data
+                .GroupBy(word => word.Definition)
+                .Select(g => g.First());
         }
     }
 

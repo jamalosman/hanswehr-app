@@ -12,6 +12,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Dictionary.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)hanswehr.xml" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)hanswehr.xml" />
   </ItemGroup>
 </Project>
