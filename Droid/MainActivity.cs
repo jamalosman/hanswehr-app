@@ -18,7 +18,7 @@ namespace HansWehr.Droid
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            HansWehr = Dictionary.Instance
+			HansWehr = Dictionary.Instance;
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 

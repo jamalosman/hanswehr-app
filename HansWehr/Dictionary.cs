@@ -29,27 +29,31 @@ namespace HansWehr
         private static Dictionary _instance;
         public static Dictionary Instance
         {
-            get { return _instance ?? new Dictionary(); }
+            get 
+			{
+				if (_instance != null) return _instance = new Dictionary();
+				else return _instance;
+			}
         }
 
-		private Dictionary()
+		Dictionary()
 		{
             IndexDirectory = BuildIndex();
 		}
 
-        private Store.Directory GetIndex()
+        Store.Directory GetIndex()
         {
             try
             {
                 return FSDirectory.Open(IndexPath);
             }
-            catch (NotImplementedException ex) // want to find out what exception will get thrown
+            catch (NotImplementedException) // want to find out what exception will get thrown
             {
                 return null;
             }
         }
 
-        private Store.Directory BuildIndex()
+        Store.Directory BuildIndex()
         {
             var dictionary = GetWords();
             var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
@@ -70,12 +74,12 @@ namespace HansWehr
             return indexDirectory;
         }
 
-        private XDocument GetDictionary()
+        XDocument GetDictionary()
         {
             return GetDictionaryFromFile() ?? GetDictionaryFromResource();
         }
 
-		private XDocument GetDictionaryFromResource()
+		XDocument GetDictionaryFromResource()
         {
             
             var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
@@ -88,14 +92,15 @@ namespace HansWehr
             //var xmlString = File.ReadAllText(HansWehrPath);
             //return XDocument.Parse(xmlString);
         }
-        private XDocument GetDictionaryFromFile()
+        
+		XDocument GetDictionaryFromFile()
         {
             try
             {
                 var xmlString = File.ReadAllText(HansWehrPath);
                 return XDocument.Parse(xmlString);
             }
-            catch (NotImplementedException ex) // want to find out what exception will get thrown
+			catch (FileNotFoundException) // want to find out what exception will get thrown
             {
                 return null;
             }
@@ -141,11 +146,5 @@ namespace HansWehr
                 .GroupBy(word => word.Definition)
                 .Select(g => g.First());
         }
-    }
-
-    public class Word
-    {
-        public string ArabicWord { get; set; }
-        public string Definition { get; set; }
     }
 }
