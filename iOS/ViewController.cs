@@ -7,7 +7,7 @@ namespace HansWehr.iOS
 {
     public partial class ViewController : UIViewController
     {
-		static Dictionary HansWehr = new Dictionary();
+        static Dictionary HansWehr = Dictionary.Instance;
 
         public ViewController(IntPtr handle) : base(handle)
         {

@@ -26,8 +26,8 @@ namespace HansWehr
 		string IndexPath = Path.Combine(AppFolder, "index");
 		Store.Directory IndexDirectory;
 
-        private Dictionary _instance;
-        public Dictionary Instance
+        private static Dictionary _instance;
+        public static Dictionary Instance
         {
             get { return _instance ?? new Dictionary(); }
         }
