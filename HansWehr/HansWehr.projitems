@@ -10,8 +10,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Dictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Word.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)hanswehr.xml" />
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)hanswehr.xml" />
   </ItemGroup>
 </Project>
