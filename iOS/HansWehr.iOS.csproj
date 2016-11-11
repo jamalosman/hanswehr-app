@@ -121,9 +121,6 @@
     </Compile>
     <Compile Include="WordListDataSource.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <BundleResource Include="hanswehr.xml" />
-  </ItemGroup>
   <Import Project="..\HansWehr\HansWehr.projitems" Label="Shared" Condition="Exists('..\HansWehr\HansWehr.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

@@ -13,7 +13,7 @@ namespace HansWehr.Droid
     public class MainActivity : Activity
     {
         int count = 1;
-        Dictionary HansWehr;
+		Dictionary HansWehr = Dictionary.Instance;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
