@@ -11,8 +11,8 @@ using UIKit;
 
 namespace HansWehr.iOS
 {
-    [Register ("ViewController")]
-    partial class ViewController
+    [Register ("SearchViewController")]
+    partial class SearchViewController
     {
         [Outlet]
         [GeneratedCode ("iOS Designer", "1.0")]

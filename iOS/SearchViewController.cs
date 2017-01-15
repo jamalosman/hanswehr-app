@@ -5,11 +5,11 @@ using UIKit;
 
 namespace HansWehr.iOS
 {
-    public partial class ViewController : UIViewController
+    public partial class SearchViewController : UIViewController
     {
         static Dictionary HansWehr = Dictionary.Instance;
 
-        public ViewController(IntPtr handle) : base(handle)
+        public SearchViewController(IntPtr handle) : base(handle)
         {
         }
 
