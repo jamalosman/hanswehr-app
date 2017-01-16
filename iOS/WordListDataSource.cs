@@ -10,7 +10,7 @@ namespace HansWehr.iOS
         string CellIdentifier = "WordCell";
 
 
-        public List<Word> Words { get; set; }
+        public List<WordDefinition> Words { get; set; }
 
         public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
         {

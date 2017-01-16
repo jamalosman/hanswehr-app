@@ -11,6 +11,7 @@ using Lucene.Net.Documents;
 using Lucene.Net.Search;
 using System.Diagnostics;
 using Lucene.Net.QueryParsers;
+using SQLite;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,6 +25,7 @@ namespace HansWehr
 		}
 
 		string HansWehrPath = IO.Path.Combine(AppFolder, "hanswehr.xml");
+		string DbPath = IO.Path.Combine(AppFolder, "hanswehr.db");
 		string IndexPath = IO.Path.Combine(AppFolder, "index");
 		Directory IndexDirectory;
 
@@ -40,6 +42,12 @@ namespace HansWehr
 		Dictionary()
 		{
 			IndexDirectory = GetIndex() ?? BuildIndex();
+		}
+
+		SQLiteConnection GetDatabase()
+		{
+			var conn = new SQLiteConnection(DbPath)
+			return conn;
 		}
 
 		Directory GetIndex()
@@ -101,28 +109,27 @@ namespace HansWehr
 
 		}
 
-		public IEnumerable<Word> GetWords()
+		public IEnumerable<WordDefinition> GetWords()
 		{
-			var Words =
+			return
 				GetDictionary()
 				.Descendants()
 				.Where(element => new[] { "rootword", "subword" }.Contains(element.Name.LocalName))
-				.Select(wordElement => new Word
+				.Select(wordElement => new WordDefinition
 				{
 					ArabicWord = wordElement.Element("arabic").Value,
 					Definition = wordElement.Element("information").Value
 				});
-			return Words;
 		}
 
 
 
-		public IEnumerable<Word> Query(string queryString, int limit = 50)
+		public IEnumerable<WordDefinition> Query(string queryString, int limit = 50)
 		{
 			var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
 			var parser = new QueryParser(Lucene.Net.Util.Version.LUCENE_30, "Definition", analyzer);
 			var query = parser.Parse(queryString);
-			var data = new List<Word>();
+			var data = new List<WordDefinition>();
 
 
 			using (var searcher = new IndexSearcher(IndexDirectory))
@@ -132,7 +139,7 @@ namespace HansWehr
 				foreach (var scoreDoc in hits.ScoreDocs)
 				{
 					var document = searcher.Doc(scoreDoc.Doc);
-					data.Add(new Word()
+					data.Add(new WordDefinition()
 					{
 						ArabicWord = document.Get("Arabic"),
 						Definition = document.Get("Definition")

@@ -8,17 +8,17 @@ using Android.Widget;
 
 namespace HansWehr.Droid
 {
-	public class WordListAdapter : BaseAdapter<Word>
+	public class WordListAdapter : BaseAdapter<WordDefinition>
 	{
 		public Activity Context { get; set; }
-		public IList<Word> Words { get; set; }
+		public IList<WordDefinition> Words { get; set; }
 
-		public WordListAdapter(Activity context, IList<Word> words) : base()
+		public WordListAdapter(Activity context, IList<WordDefinition> words) : base()
 		{
 			Context = context;
 			Words = words;
 		}
-		public override Word this[int position]
+		public override WordDefinition this[int position]
 		{
 			get { return Words[position]; }
 		}
