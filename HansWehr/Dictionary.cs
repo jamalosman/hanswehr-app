@@ -6,17 +6,19 @@ using System.Linq;
 using System.Xml.Linq;
 using Lucene.Net.Analysis.Standard;
 using Lucene.Net.Store;
+using Util = Lucene.Net.Util;
 using Lucene.Net.Index;
 using Lucene.Net.Documents;
 using Lucene.Net.Search;
 using System.Diagnostics;
 using Lucene.Net.QueryParsers;
-using SQLite;
-using System.Security.Cryptography;
-using System.Text;
+using SQLite.Net;
 
 namespace HansWehr
 {
+	/// <summary>
+	/// A searchable hans wehr dictionary
+	/// </summary>
 	public class Dictionary
 	{
 		static string AppFolder
@@ -24,12 +26,22 @@ namespace HansWehr
 			get { return Environment.GetFolderPath(Environment.SpecialFolder.Personal); }
 		}
 
-		string HansWehrPath = IO.Path.Combine(AppFolder, "hanswehr.xml");
-		string DbPath = IO.Path.Combine(AppFolder, "hanswehr.db");
-		string IndexPath = IO.Path.Combine(AppFolder, "index");
-		Directory IndexDirectory;
+		string _HansWehrPath = IO.Path.Combine(AppFolder, "hanswehr.xml");
+		string _DatabasePath = IO.Path.Combine(AppFolder, "hanswehr.db");
+		string _IndexPath = IO.Path.Combine(AppFolder, "index");
+		Database _Database;
+		Directory _IndexDirectory;
+		string[] _IndexFields = { "Arabic", "Definition", "DefinitionSnippet",
+			"RecurringWord2", "RecurringWord3", "RecurringWord4", "RecurringWord5", "RecurringWord6",
+			"RecurringWord7", "RecurringWord8", "RecurringWord9", "RecurringWord10", "RecurringWord11" };
+			
 
 		private static Dictionary _instance;
+
+		/// <summary>
+		/// Gets the single instance of the dictionary.
+		/// </summary>
+		/// <value>The single instance of the dictionary.</value>
 		public static Dictionary Instance
 		{
 			get
@@ -41,36 +53,49 @@ namespace HansWehr
 
 		Dictionary()
 		{
-			IndexDirectory = GetIndex() ?? BuildIndex();
+			
+			_Database = new Database(_DatabasePath);
+
+			if (!_Database.Table<WordDefinition>().Any())
+			{
+				XDocument dictionary = GetDictionary();
+				IEnumerable<WordDefinition> words = GetWords(dictionary);
+				_Database.Populate(words);
+			}
+
+			_IndexDirectory = GetIndex() ?? BuildIndex(_Database.Table<WordDefinition>().ToList());
 		}
 
-		SQLiteConnection GetDatabase()
-		{
-			var conn = new SQLiteConnection(DbPath)
-			return conn;
-		}
 
 		Directory GetIndex()
 		{
-			var directory = FSDirectory.Open(IndexPath);
+			var directory = FSDirectory.Open(_IndexPath);
 			directory.EnsureOpen();
 			return directory.Directory.Exists ? directory : null;
 		}
 
-		Directory BuildIndex()
+		Directory BuildIndex(IEnumerable<WordDefinition> words)
 		{
-			var dictionary = GetWords();
-			var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-			var indexDirectory = new SimpleFSDirectory(new IO.DirectoryInfo(IndexPath));
+			var analyzer = new StandardAnalyzer(Util.Version.LUCENE_30);
+			var indexDirectory = new SimpleFSDirectory(new IO.DirectoryInfo(_IndexPath));
 			var writer = new IndexWriter(indexDirectory, analyzer, IndexWriter.MaxFieldLength.LIMITED);
 
 
-			foreach (var word in dictionary)
+			foreach (var word in words)
 			{
 				Document doc = new Document();
 				doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
 				doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
-				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet, Field.Store.YES, Field.Index.ANALYZED));
+				// if the word appears in the snippet, which is the first few words, then it is more likely to be what they're looking for
+				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet, Field.Store.YES, Field.Index.ANALYZED) { Boost = 15 });
+
+				foreach (WordOccuranceCount recurringWord in word.RecurringWords)
+				{
+					// words that occur more than once are added as separate fields and boosted based on how many times they occured
+					doc.Add(new Field($"RecurringWord{recurringWord.Count}", recurringWord.Words, Field.Store.YES, Field.Index.ANALYZED)
+					{ Boost = recurringWord.Count * 10 });
+				}
+
 				writer.AddDocument(doc);
 			}
 			return indexDirectory;
@@ -99,20 +124,25 @@ namespace HansWehr
 		{
 			try
 			{
-				var xmlString = IO.File.ReadAllText(HansWehrPath);
+				var xmlString = IO.File.ReadAllText(_HansWehrPath);
 				return XDocument.Parse(xmlString);
 			}
-			catch (IO.FileNotFoundException) // want to find out what exception will get thrown
+			catch (IO.FileNotFoundException)
 			{
 				return null;
 			}
 
 		}
 
-		public IEnumerable<WordDefinition> GetWords()
+		/// <summary>
+		/// Get all the words in the dictionary.
+		/// </summary>
+		/// <returns>The words in the dictionary as a list if WordDefinitions</returns>
+		/// <param name="dictionary">an XML document containing the words</param>
+		IEnumerable<WordDefinition> GetWords(XDocument dictionary)
 		{
 			return
-				GetDictionary()
+				dictionary
 				.Descendants()
 				.Where(element => new[] { "rootword", "subword" }.Contains(element.Name.LocalName))
 				.Select(wordElement => new WordDefinition
@@ -123,16 +153,20 @@ namespace HansWehr
 		}
 
 
-
+		/// <summary>
+		/// Query the dictionary for a word.
+		/// </summary>
+		/// <param name="queryString">The search terms</param>
+		/// <param name="limit">The maximum number of results</param>
 		public IEnumerable<WordDefinition> Query(string queryString, int limit = 50)
 		{
-			var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-			var parser = new QueryParser(Lucene.Net.Util.Version.LUCENE_30, "Definition", analyzer);
+			var analyzer = new StandardAnalyzer(Util.Version.LUCENE_30);
+			var parser = new MultiFieldQueryParser(Util.Version.LUCENE_30, _IndexFields, analyzer);
 			var query = parser.Parse(queryString);
 			var data = new List<WordDefinition>();
 
 
-			using (var searcher = new IndexSearcher(IndexDirectory))
+			using (var searcher = new IndexSearcher(_IndexDirectory))
 			{
 				var hits = searcher.Search(query, limit);
 
@@ -142,7 +176,8 @@ namespace HansWehr
 					data.Add(new WordDefinition()
 					{
 						ArabicWord = document.Get("Arabic"),
-						Definition = document.Get("Definition")
+						Definition = document.Get("Definition"),
+						DefinitionSnippet = document.Get("DefinitionSnippet"),
 					});
 				}
 			}

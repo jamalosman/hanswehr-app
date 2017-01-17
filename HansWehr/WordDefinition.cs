@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq;
-using SQLite;
 using System.Collections.Generic;
 using SQLiteNetExtensions.Attributes;
+using SQLite.Net.Attributes;
 
 namespace HansWehr
 {
@@ -11,13 +11,10 @@ namespace HansWehr
 		[PrimaryKey, AutoIncrement]
 		public int Id { get; }
 
-		[Indexed]
 		public string ArabicWord { get; set; }
 
-		[Indexed]
 		public string Definition { get; set; }
 
-		[Indexed]
 		public string DefinitionSnippet { get; set; }
 
 		[OneToMany(CascadeOperations = CascadeOperation.All)]
@@ -35,13 +32,19 @@ namespace HansWehr
 				.Aggregate((agg, word) => $"{agg} {word}");
 
 			RecurringWords = words
-				.Select(word => new WordOccuranceCount
+				.Select(word => new
 				{
 					Word = word.ToLower(),
 					Count = words.Count(otherWord => word == otherWord),
+				})
+				.Where(wrd => wrd.Count > 1)
+				.GroupBy(wrd => wrd.Count)
+				.Select(group => new WordOccuranceCount
+				{
+					Count = group.First().Count,
+					Words = group.Select(grp => grp.Word).Aggregate((joined, wrd) => $"{joined} {wrd}"),
 					WordDefinitionId = this.Id,
 				})
-				.Where(occ => occ.Count > 1)
 				.ToList();
 		}
 	}
@@ -51,10 +54,21 @@ namespace HansWehr
 		[PrimaryKey, AutoIncrement]
 		public int Id { get; set; }
 
-		[Indexed]
-		public string Word { get; set; }
+		/// <summary>
+		/// All the words in this definition that occur 'Count' number of times
+		/// </summary>
+		/// <value>The words.</value>
+		public string Words { get; set; }
 
-		[Indexed]
+		[Ignore]
+		public List<string> WordsSeparated
+		{
+			get
+			{
+				return Words.Split(' ').ToList();
+			}
+		}
+
 		public int Count { get; set; }
 
 		[ManyToOne]
