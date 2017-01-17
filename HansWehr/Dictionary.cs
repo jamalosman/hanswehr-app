@@ -32,9 +32,8 @@ namespace HansWehr
 		Database _Database;
 		Directory _IndexDirectory;
 		string[] _IndexFields = { "Arabic", "Definition", "DefinitionSnippet",
-			"RecurringWord2", "RecurringWord3", "RecurringWord4", "RecurringWord5", "RecurringWord6",
-			"RecurringWord7", "RecurringWord8", "RecurringWord9", "RecurringWord10", "RecurringWord11" };
-			
+			/*"RecurringWord2", "RecurringWord3", "RecurringWord4", "RecurringWord5"*/ };
+
 
 		private static Dictionary _instance;
 
@@ -53,7 +52,7 @@ namespace HansWehr
 
 		Dictionary()
 		{
-			
+
 			_Database = new Database(_DatabasePath);
 
 			if (!_Database.Table<WordDefinition>().Any())
@@ -84,19 +83,26 @@ namespace HansWehr
 			foreach (var word in words)
 			{
 				Document doc = new Document();
-				doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
-				doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
+				doc.Add(new Field("Arabic", word.ArabicWord ?? "", Field.Store.YES, Field.Index.NOT_ANALYZED));
+				doc.Add(new Field("Definition", word.Definition ?? "", Field.Store.YES, Field.Index.ANALYZED));
 				// if the word appears in the snippet, which is the first few words, then it is more likely to be what they're looking for
-				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet, Field.Store.YES, Field.Index.ANALYZED) { Boost = 15 });
+				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet ?? "", Field.Store.YES, Field.Index.ANALYZED) { Boost = 15 });
 
-				foreach (WordOccuranceCount recurringWord in word.RecurringWords)
-				{
-					// words that occur more than once are added as separate fields and boosted based on how many times they occured
-					doc.Add(new Field($"RecurringWord{recurringWord.Count}", recurringWord.Words, Field.Store.YES, Field.Index.ANALYZED)
-					{ Boost = recurringWord.Count * 10 });
-				}
+				//if (word.RecurringWords != null)
+				//	foreach (WordOccuranceCount recurringWord in word.RecurringWords)
+				//	{
+				//		// words that occur more than once are added as separate fields and boosted based on how many times they occured
+				//		doc.Add(new Field($"RecurringWord{recurringWord.Count}", recurringWord.Words, Field.Store.YES, Field.Index.ANALYZED)
+				//		{ Boost = recurringWord.Count * 10 });
+				//	}
 
 				writer.AddDocument(doc);
+			}
+
+			var x = new QueryParser(Util.Version.LUCENE_30, "Definition", analyzer).Parse("read");
+			using (var searcher = new IndexSearcher(_IndexDirectory))
+			{
+				var y = searcher.Search(x, 50);
 			}
 			return indexDirectory;
 		}
@@ -111,13 +117,8 @@ namespace HansWehr
 
 			var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
 			var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".hanswehr.xml");
-			Debug.WriteLine(string.Join(",", assembly.GetManifestResourceNames()));
-			Debug.WriteLine(assembly.GetName().Name + ".hanswehr.xml");
 
 			return XDocument.Load(stream);
-
-			//var xmlString = File.ReadAllText(HansWehrPath);
-			//return XDocument.Parse(xmlString);
 		}
 
 		XDocument GetDictionaryFromFile()
@@ -182,7 +183,7 @@ namespace HansWehr
 				}
 			}
 			return data
-				.GroupBy(word => word.Definition)
+				.GroupBy(word => word.ArabicWord)
 				.Select(g => g.First());
 		}
 	}

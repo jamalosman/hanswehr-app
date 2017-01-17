@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using SQLite.Net;
 using System.Collections.Generic;
 using SQLiteNetExtensions.Attributes;
 using SQLite.Net.Attributes;
@@ -9,7 +10,7 @@ namespace HansWehr
 	public class WordDefinition
 	{
 		[PrimaryKey, AutoIncrement]
-		public int Id { get; }
+		public int Id { get; set; }
 
 		public string ArabicWord { get; set; }
 

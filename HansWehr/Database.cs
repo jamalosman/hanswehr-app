@@ -25,8 +25,8 @@ namespace HansWehr
 
 		public Database(string databasePath, IEnumerable<WordDefinition> words = null) : base(OSPlatform, databasePath)
 		{
-			CreateTable<WordDefinition>(CreateFlags.ImplicitPK | CreateFlags.AutoIncPK);
 			CreateTable<WordOccuranceCount>();
+			CreateTable<WordDefinition>();
 
 			Populate(words);
 		}
@@ -34,7 +34,7 @@ namespace HansWehr
 		public void Populate(IEnumerable<WordDefinition> words)
 		{
 			if (!Table<WordDefinition>().Any() && words != null)
-				this.InsertAllWithChildren(words, true);
+				this.InsertAll(words, true);
 		}
 	}
 }
