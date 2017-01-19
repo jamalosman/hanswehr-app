@@ -23,6 +23,19 @@ namespace HansWehr
 
 		public WordDefinition()
 		{
+			Init();
+		}
+
+		public WordDefinition(string arabicWord, string definition)
+		{
+			ArabicWord = arabicWord;
+			Definition = definition;
+
+			Init();
+		}
+
+		private void Init()
+		{
 			if (string.IsNullOrWhiteSpace(Definition)) return;
 
 			var words = Definition
@@ -32,21 +45,21 @@ namespace HansWehr
 				.Take(10)
 				.Aggregate((agg, word) => $"{agg} {word}");
 
-			RecurringWords = words
-				.Select(word => new
-				{
-					Word = word.ToLower(),
-					Count = words.Count(otherWord => word == otherWord),
-				})
-				.Where(wrd => wrd.Count > 1)
-				.GroupBy(wrd => wrd.Count)
-				.Select(group => new WordOccuranceCount
-				{
-					Count = group.First().Count,
-					Words = group.Select(grp => grp.Word).Aggregate((joined, wrd) => $"{joined} {wrd}"),
-					WordDefinitionId = this.Id,
-				})
-				.ToList();
+			//RecurringWords = words
+			//	.Select(word => new
+			//	{
+			//		Word = word.ToLower(),
+			//		Count = words.Count(otherWord => word == otherWord),
+			//	})
+			//	.Where(wrd => wrd.Count > 1)
+			//	.GroupBy(wrd => wrd.Count)
+			//	.Select(group => new WordOccuranceCount
+			//	{
+			//		Count = group.First().Count,
+			//		Words = group.Select(grp => grp.Word).Aggregate((joined, wrd) => $"{joined} {wrd}"),
+			//		WordDefinitionId = this.Id,
+			//	})
+			//	.ToList();
 		}
 	}
 

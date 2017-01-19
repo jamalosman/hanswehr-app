@@ -31,7 +31,7 @@ namespace HansWehr
 		string _IndexPath = IO.Path.Combine(AppFolder, "index");
 		Database _Database;
 		Directory _IndexDirectory;
-		string[] _IndexFields = { "Arabic", "Definition", "DefinitionSnippet",
+		string[] _IndexFields = {"Definition", "DefinitionSnippet",
 			/*"RecurringWord2", "RecurringWord3", "RecurringWord4", "RecurringWord5"*/ };
 
 
@@ -83,8 +83,13 @@ namespace HansWehr
 			foreach (var word in words)
 			{
 				Document doc = new Document();
-				doc.Add(new Field("Arabic", word.ArabicWord ?? "", Field.Store.YES, Field.Index.NOT_ANALYZED));
-				doc.Add(new Field("Definition", word.Definition ?? "", Field.Store.YES, Field.Index.ANALYZED));
+
+				if (word == null &&
+					string.IsNullOrWhiteSpace(word.ArabicWord) &&
+					string.IsNullOrWhiteSpace(word.Definition))
+					continue;
+				doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
+				doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
 				// if the word appears in the snippet, which is the first few words, then it is more likely to be what they're looking for
 				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet ?? "", Field.Store.YES, Field.Index.ANALYZED) { Boost = 15 });
 
@@ -99,11 +104,6 @@ namespace HansWehr
 				writer.AddDocument(doc);
 			}
 
-			var x = new QueryParser(Util.Version.LUCENE_30, "Definition", analyzer).Parse("read");
-			using (var searcher = new IndexSearcher(_IndexDirectory))
-			{
-				var y = searcher.Search(x, 50);
-			}
 			return indexDirectory;
 		}
 
@@ -146,11 +146,7 @@ namespace HansWehr
 				dictionary
 				.Descendants()
 				.Where(element => new[] { "rootword", "subword" }.Contains(element.Name.LocalName))
-				.Select(wordElement => new WordDefinition
-				{
-					ArabicWord = wordElement.Element("arabic").Value,
-					Definition = wordElement.Element("information").Value
-				});
+				.Select(wordElement => new WordDefinition(wordElement.Element("arabic").Value,wordElement.Element("information").Value));
 		}
 
 
