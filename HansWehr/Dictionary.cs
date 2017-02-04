@@ -60,9 +60,10 @@ namespace HansWehr
 				XDocument dictionary = GetDictionary();
 				IEnumerable<WordDefinition> words = GetWords(dictionary);
 				_Database.Populate(words);
+				_IndexDirectory = GetIndex() ?? BuildIndex(words);
+
 			}
 
-			_IndexDirectory = GetIndex() ?? BuildIndex(_Database.Table<WordDefinition>().ToList());
 		}
 
 

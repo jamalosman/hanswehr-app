@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Dictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WordDefinition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Database.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IDictionaryProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)hanswehr.xml" />
