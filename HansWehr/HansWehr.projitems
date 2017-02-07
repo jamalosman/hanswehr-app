@@ -9,10 +9,13 @@
     <Import_RootNamespace>HansWehr</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="$(MSBuildThisFileDirectory)Dictionary.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)WordDefinition.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Database.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)IDictionaryProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LuceneDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Word.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DictionaryConnection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IWordDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SqliteDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlWordExtractor.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IWordExtractor.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)hanswehr.xml" />

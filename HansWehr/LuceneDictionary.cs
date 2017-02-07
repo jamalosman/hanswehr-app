@@ -12,14 +12,13 @@ using Lucene.Net.Documents;
 using Lucene.Net.Search;
 using System.Diagnostics;
 using Lucene.Net.QueryParsers;
-using SQLite.Net;
 
 namespace HansWehr
 {
 	/// <summary>
 	/// A searchable hans wehr dictionary
 	/// </summary>
-	public class Dictionary
+	public class LuceneDictionary : IWordDictionary
 	{
 		static string AppFolder
 		{
@@ -27,42 +26,30 @@ namespace HansWehr
 		}
 
 		string _HansWehrPath = IO.Path.Combine(AppFolder, "hanswehr.xml");
-		string _DatabasePath = IO.Path.Combine(AppFolder, "hanswehr.db");
 		string _IndexPath = IO.Path.Combine(AppFolder, "index");
-		Database _Database;
 		Directory _IndexDirectory;
-		string[] _IndexFields = {"Definition", "DefinitionSnippet",
-			/*"RecurringWord2", "RecurringWord3", "RecurringWord4", "RecurringWord5"*/ };
 
-
-		private static Dictionary _instance;
+		private static LuceneDictionary _instance;
 
 		/// <summary>
 		/// Gets the single instance of the dictionary.
 		/// </summary>
 		/// <value>The single instance of the dictionary.</value>
-		public static Dictionary Instance
+		public static LuceneDictionary Instance
 		{
 			get
 			{
-				if (_instance == null) return _instance = new Dictionary();
+				if (_instance == null) return _instance = new LuceneDictionary();
 				else return _instance;
 			}
 		}
 
-		Dictionary()
+		LuceneDictionary()
 		{
-
-			_Database = new Database(_DatabasePath);
-
-			if (!_Database.Table<WordDefinition>().Any())
-			{
-				XDocument dictionary = GetDictionary();
-				IEnumerable<WordDefinition> words = GetWords(dictionary);
-				_Database.Populate(words);
-				_IndexDirectory = GetIndex() ?? BuildIndex(words);
-
-			}
+				
+			XDocument dictionary = GetDictionary();
+			IEnumerable<Word> words = GetWords(dictionary);
+			_IndexDirectory = GetIndex() ?? BuildIndex(words);
 
 		}
 
@@ -74,7 +61,7 @@ namespace HansWehr
 			return directory.Directory.Exists ? directory : null;
 		}
 
-		Directory BuildIndex(IEnumerable<WordDefinition> words)
+		Directory BuildIndex(IEnumerable<Word> words)
 		{
 			var analyzer = new StandardAnalyzer(Util.Version.LUCENE_30);
 			var indexDirectory = new SimpleFSDirectory(new IO.DirectoryInfo(_IndexPath));
@@ -91,16 +78,6 @@ namespace HansWehr
 					continue;
 				doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
 				doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
-				// if the word appears in the snippet, which is the first few words, then it is more likely to be what they're looking for
-				doc.Add(new Field("DefinitionSnippet", word.DefinitionSnippet ?? "", Field.Store.YES, Field.Index.ANALYZED) { Boost = 15 });
-
-				//if (word.RecurringWords != null)
-				//	foreach (WordOccuranceCount recurringWord in word.RecurringWords)
-				//	{
-				//		// words that occur more than once are added as separate fields and boosted based on how many times they occured
-				//		doc.Add(new Field($"RecurringWord{recurringWord.Count}", recurringWord.Words, Field.Store.YES, Field.Index.ANALYZED)
-				//		{ Boost = recurringWord.Count * 10 });
-				//	}
 
 				writer.AddDocument(doc);
 			}
@@ -116,7 +93,7 @@ namespace HansWehr
 		XDocument GetDictionaryFromResource()
 		{
 
-			var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
+			var assembly = typeof(LuceneDictionary).GetTypeInfo().Assembly;
 			var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".hanswehr.xml");
 
 			return XDocument.Load(stream);
@@ -141,13 +118,13 @@ namespace HansWehr
 		/// </summary>
 		/// <returns>The words in the dictionary as a list if WordDefinitions</returns>
 		/// <param name="dictionary">an XML document containing the words</param>
-		IEnumerable<WordDefinition> GetWords(XDocument dictionary)
+		IEnumerable<Word> GetWords(XDocument dictionary)
 		{
 			return
 				dictionary
 				.Descendants()
 				.Where(element => new[] { "rootword", "subword" }.Contains(element.Name.LocalName))
-				.Select(wordElement => new WordDefinition(wordElement.Element("arabic").Value,wordElement.Element("information").Value));
+				.Select(wordElement => new Word(wordElement.Element("arabic").Value,wordElement.Element("information").Value));
 		}
 
 
@@ -156,12 +133,12 @@ namespace HansWehr
 		/// </summary>
 		/// <param name="queryString">The search terms</param>
 		/// <param name="limit">The maximum number of results</param>
-		public IEnumerable<WordDefinition> Query(string queryString, int limit = 50)
+		public IEnumerable<Word> Query(string queryString, int limit)
 		{
 			var analyzer = new StandardAnalyzer(Util.Version.LUCENE_30);
-			var parser = new MultiFieldQueryParser(Util.Version.LUCENE_30, _IndexFields, analyzer);
+			var parser = new QueryParser(Util.Version.LUCENE_30, "Definition", analyzer);
 			var query = parser.Parse(queryString);
-			var data = new List<WordDefinition>();
+			var data = new List<Word>();
 
 
 			using (var searcher = new IndexSearcher(_IndexDirectory))
@@ -171,17 +148,21 @@ namespace HansWehr
 				foreach (var scoreDoc in hits.ScoreDocs)
 				{
 					var document = searcher.Doc(scoreDoc.Doc);
-					data.Add(new WordDefinition()
+					data.Add(new Word()
 					{
 						ArabicWord = document.Get("Arabic"),
 						Definition = document.Get("Definition"),
-						DefinitionSnippet = document.Get("DefinitionSnippet"),
 					});
 				}
 			}
 			return data
 				.GroupBy(word => word.ArabicWord)
 				.Select(g => g.First());
+		}
+
+		public IEnumerable<Word> Query(string queryString)
+		{
+			return Query(queryString, 50);
 		}
 	}
 }

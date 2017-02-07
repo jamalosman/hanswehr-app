@@ -7,7 +7,7 @@ namespace HansWehr.iOS
 {
     public partial class SearchViewController : UIViewController
     {
-        static Dictionary HansWehr = Dictionary.Instance;
+		static IWordDictionary HansWehr = SQLiteDictionary.Instance;
 
         public SearchViewController(IntPtr handle) : base(handle)
         {

@@ -14,12 +14,12 @@ namespace HansWehr.Droid
     public class MainActivity : Activity
     {
         int count = 1;
-		Dictionary HansWehr = Dictionary.Instance;
+		LuceneDictionary HansWehr = LuceneDictionary.Instance;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-			HansWehr = Dictionary.Instance;
+			HansWehr = LuceneDictionary.Instance;
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
