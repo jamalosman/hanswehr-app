@@ -22,10 +22,14 @@ namespace HansWehr.Droid
 			ResultListView = FindViewById<ListView>(Resource.Id.ResultListViewId);
 
 			var loader = new DatabaseLoader(this);
-			var dictionary = new Dictionary(loader.FilePath);
 
-			WordSearchView.QueryTextSubmit += (sender, e) =>  
-				ResultListView.Adapter = new WordResultAdapter(this, dictionary.Search(e.Query).ToList());
+			WordSearchView.QueryTextSubmit += (sender, e) =>
+			{
+				using (var dictionary = new Dictionary(loader.FilePath))
+				{
+					ResultListView.Adapter = new WordResultAdapter(this, dictionary.Search(e.Query).ToList());
+				}
+			};
 		}
 
 	}
