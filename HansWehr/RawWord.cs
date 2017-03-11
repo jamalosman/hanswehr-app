@@ -2,7 +2,7 @@
 using SQLite;
 namespace HansWehr
 {
-	public class Word
+	public class RawWord
 	{
 		[PrimaryKey,Column("rowid")]
 		public int Id { get; set; }

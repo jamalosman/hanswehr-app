@@ -1,13 +1,16 @@
 ﻿using Android.App;
 using Android.Widget;
 using Android.OS;
+using System.Linq;
+using HansWehr;
 
 namespace HansWehr.Droid
 {
 	[Activity(Label = "HansWehr", MainLauncher = true, Icon = "@mipmap/icon")]
 	public class MainActivity : Activity
 	{
-		int count = 1;
+		private SearchView WordSearchView { get; set; }
+		private ListView ResultListView { get; set; }
 
 		protected override void OnCreate(Bundle savedInstanceState)
 		{
@@ -15,13 +18,16 @@ namespace HansWehr.Droid
 
 			// Set our view from the "main" layout resource
 			SetContentView(Resource.Layout.Main);
+			WordSearchView = FindViewById<SearchView>(Resource.Id.WordSearchViewId);
+			ResultListView = FindViewById<ListView>(Resource.Id.ResultListViewId);
 
-			// Get our button from the layout resource,
-			// and attach an event to it
-			Button button = FindViewById<Button>(Resource.Id.myButton);
+			var loader = new DatabaseLoader(this);
+			var dictionary = new Dictionary(loader.FilePath);
 
-			button.Click += delegate { button.Text = string.Format("{0} clicks!", count++); };
+			WordSearchView.QueryTextSubmit += (sender, e) =>  
+				ResultListView.Adapter = new WordResultAdapter(this, dictionary.Search(e.Query).ToList());
 		}
+
 	}
 }
 
