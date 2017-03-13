@@ -31,7 +31,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Dictionary.cs" />
     <Compile Include="IDatabaseLoader.cs" />
-    <Compile Include="RawWord.cs" />
+    <Compile Include="RawWordResult.cs" />
     <Compile Include="MatchInfo.cs" />
     <Compile Include="Word.cs" />
     <Compile Include="WordResult.cs" />

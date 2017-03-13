@@ -40,12 +40,12 @@ namespace HansWehr.Droid
 
 		public override Java.Lang.Object GetItem(int position)
 		{
-			return Results[position].Word.ArabicWord;
+			return Results[position].ArabicWord;
 		}
 
 		public override long GetItemId(int position)
 		{
-			return Results[position].Word.Id;
+			return Results[position].Id;
 		}
 
 		public override View GetView(int position, View convertView, ViewGroup parent)
@@ -53,10 +53,10 @@ namespace HansWehr.Droid
 			var wordResult = this[position];
 
 			View view = convertView ?? View.Inflate(Context, Android.Resource.Layout.SimpleListItem2, null);
-			view.FindViewById<TextView>(Android.Resource.Id.Text1).Text = wordResult.Word.ArabicWord;
+			view.FindViewById<TextView>(Android.Resource.Id.Text1).Text = wordResult.ArabicWord;
 
 			var detail = view.FindViewById<TextView>(Android.Resource.Id.Text2);
-			detail.Text = LeftToRightMarker + wordResult.Word.Definition;
+			detail.Text = LeftToRightMarker + wordResult.Definition;
 			detail.Ellipsize = TextUtils.TruncateAt.End;
 			detail.TextDirection = TextDirection.Ltr;
 			detail.SetMaxLines(3);
