@@ -11,5 +11,6 @@ namespace HansWehr
 		public bool IsRoot { get; set; }
 		public int RoodWordId { get; set; }
 		public byte[] RawMatchInfo { get; set; }
+		public string Offsets { get; set; }
 	}
 }

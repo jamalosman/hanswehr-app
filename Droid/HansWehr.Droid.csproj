@@ -115,6 +115,7 @@
     <AndroidResource Include="Resources\mipmap-xxhdpi\Icon.png" />
     <AndroidResource Include="Resources\mipmap-xxxhdpi\Icon.png" />
     <AndroidResource Include="Resources\layout\WordView.axml" />
+    <AndroidResource Include="Resources\layout\DerivedWordView.axml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HansWehr\HansWehr.csproj">

@@ -35,6 +35,11 @@
     <Compile Include="MatchInfo.cs" />
     <Compile Include="Word.cs" />
     <Compile Include="WordResult.cs" />
+    <Compile Include="OkapiBm25Ranker.cs" />
+    <Compile Include="IWordRanker.cs" />
+    <Compile Include="PositionRanker.cs" />
+    <Compile Include="OffsetInfo.cs" />
+    <Compile Include="WeightedRanker.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="SQLitePCLRaw.core">

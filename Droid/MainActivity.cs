@@ -4,6 +4,7 @@ using Android.OS;
 using System.Linq;
 using HansWehr;
 using Android.Content;
+using Android.Views;
 
 namespace HansWehr.Droid
 {
@@ -30,7 +31,11 @@ namespace HansWehr.Droid
 				using (var dictionary = new Dictionary(loader.FilePath))
 				{
 					var words = dictionary.Search(e.Query).ToList();
-					ResultListView.Adapter = Adapter = new WordResultAdapter(this, words);
+					//words = new WeightedRanker(new OkapiBm25Ranker(),new PositionRanker(), 0.1).Rank(words);
+					//words = new PositionRanker().Rank(words);
+					var okapiBm25Ranker = new OkapiBm25Ranker(words);
+
+					ResultListView.Adapter = Adapter = new WordResultAdapter(this, okapiBm25Ranker.Rank());
 				}
 			};
 			ResultListView.ItemClick += (sender, e) => DisplayWordView(Adapter.Results[e.Position]);

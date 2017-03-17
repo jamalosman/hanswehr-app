@@ -9,7 +9,8 @@ namespace HansWehr
 	{
 		private SQLiteConnection _database { get; set; }
 
-		string _searchQuery = "select *, matchinfo(word,'pcnalx') as RawMatchInfo from word " +
+		string _searchQuery = "select *, matchinfo(word,'pcnalx') as RawMatchInfo, offsets(word) as Offsets " +
+								"from word " +
 								"inner join wordmetadata " +
 								"on word.rowid = wordmetadata.rowid " +
 								"where definition match ? ";
@@ -27,8 +28,7 @@ namespace HansWehr
 		public IEnumerable<WordResult> Search(string terms)
 		{
 			var words = _database.Query<RawWordResult>(_searchQuery, terms)
-				.Select(raw => new WordResult(raw))
-				.OrderByDescending(result => result.MatchInfo.TokenCounts[1]);
+								 .Select(raw => new WordResult(_searchQuery, raw));
 			return words;
 		}
 
