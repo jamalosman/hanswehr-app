@@ -13,7 +13,7 @@ namespace HansWehr
 		public string Definition { get { return _word.Definition; } }
 		public int Id { get { return _word.Id; } }
 		public bool IsRoot { get { return _word.IsRoot; } }
-		public Word RootWord { get { return _word.RootWord; } }
+		public int RootWordId { get { return _word.RootWordId; } }
 		public double Score { get; set; }
 
 		public MatchInfo MatchInfo { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Android.App;
 using Android.Content;
 using Android.Content.Res;
 
@@ -9,23 +10,19 @@ namespace HansWehr.Droid
 	{
 		string _fileName = "hanswehr.db";
 		string _folder = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-		public DatabaseLoader(Context context)
+		public DatabaseLoader()
 		{
-			try
-			{
-				var stream = new FileStream(Path.Combine(_folder, _fileName), FileMode.Open);
-			}
-			catch (FileNotFoundException)
-			{
-				var databaseAsset = context.Assets.Open("hanswehr.db");
 
+			if (File.Exists(Path.Combine(_folder, _fileName)))
+			{
+				var databaseAsset = Application.Context.Assets.Open(_fileName);
 
 				using (var destination = new FileStream(Path.Combine(_folder, _fileName), FileMode.Create))
 				{
 					databaseAsset.CopyTo(destination);
 				}
-			}
 
+			}
 
 
 		}

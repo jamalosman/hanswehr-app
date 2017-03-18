@@ -9,7 +9,7 @@ namespace HansWehr
 	{
 		private SQLiteConnection _database { get; set; }
 
-		string _searchQuery = "select *, matchinfo(word,'pcnalx') as RawMatchInfo, offsets(word) as Offsets " +
+		static string _searchQuery = "select *, word.rowid, matchinfo(word,'pcnalx') as RawMatchInfo, offsets(word) as Offsets " +
 								"from word " +
 								"inner join wordmetadata " +
 								"on word.rowid = wordmetadata.rowid " +
@@ -17,8 +17,9 @@ namespace HansWehr
 
 
 
-		public Dictionary(string databasePath) {
-			_database = new SQLiteConnection(databasePath);
+
+		public Dictionary(IDatabaseLoader databaseLoader) {
+			_database = new SQLiteConnection(databaseLoader.FilePath);
 		}
 
 		/// <summary>
@@ -34,12 +35,14 @@ namespace HansWehr
 
 		public Word GetWord(int wordId)
 		{
-			return _database.Table<Word>().SingleOrDefault(word => word.Id == wordId);
+			return _database.Table<Word>().FirstOrDefault(word => word.Id == wordId);
 		}
 
 		public void Dispose()
 		{
 			_database.Dispose();
+			_database = null;
+
 		}
 	}
 }

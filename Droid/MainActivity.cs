@@ -5,6 +5,7 @@ using System.Linq;
 using HansWehr;
 using Android.Content;
 using Android.Views;
+using IoC = TinyIoC.TinyIoCContainer;
 
 namespace HansWehr.Droid
 {
@@ -21,14 +22,14 @@ namespace HansWehr.Droid
 
 			// Set our view from the "main" layout resource
 			SetContentView(Resource.Layout.Main);
-			WordSearchView = FindViewById<SearchView>(Resource.Id.WordSearchViewId);
-			ResultListView = FindViewById<ListView>(Resource.Id.ResultListViewId);
+			WordSearchView = FindViewById<SearchView>(Resource.Id.WordSearchView);
+			ResultListView = FindViewById<ListView>(Resource.Id.ResultListView);
 
-			var loader = new DatabaseLoader(this);
+
 
 			WordSearchView.QueryTextSubmit += (sender, e) =>
 			{
-				using (var dictionary = new Dictionary(loader.FilePath))
+				using (var dictionary = IoC.Current.Resolve<Dictionary>())
 				{
 					var words = dictionary.Search(e.Query).ToList();
 					//words = new WeightedRanker(new OkapiBm25Ranker(),new PositionRanker(), 0.1).Rank(words);
@@ -44,8 +45,8 @@ namespace HansWehr.Droid
 		private void DisplayWordView(WordResult word)
 		{
 			var intent = new Intent(this, typeof(WordViewActivity));
-			intent.PutExtra(WordViewActivity.ARABIC_WORD, word.ArabicWord);
-			intent.PutExtra(WordViewActivity.DEFINITION, word.Definition);
+			intent.PutExtra(WordViewActivity.WORD_ID, word.Id);
+			intent.PutExtra(WordViewActivity.ROOT_WORD_ID, word.RootWordId);
 			StartActivity(intent);
 		}
 
