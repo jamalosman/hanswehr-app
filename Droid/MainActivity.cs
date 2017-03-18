@@ -34,9 +34,9 @@ namespace HansWehr.Droid
 					var words = dictionary.Search(e.Query).ToList();
 					//words = new WeightedRanker(new OkapiBm25Ranker(),new PositionRanker(), 0.1).Rank(words);
 					//words = new PositionRanker().Rank(words);
-					var okapiBm25Ranker = new OkapiBm25Ranker(words);
+					//var okapiBm25Ranker = new OkapiBm25Ranker(words);
 
-					ResultListView.Adapter = Adapter = new WordResultAdapter(this, okapiBm25Ranker.Rank());
+					ResultListView.Adapter = Adapter = new WordResultAdapter(this, words);
 				}
 			};
 			ResultListView.ItemClick += (sender, e) => DisplayWordView(Adapter.Results[e.Position]);

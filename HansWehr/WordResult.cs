@@ -8,7 +8,7 @@ namespace HansWehr
 	{
 
 		private Word _word;
-		public List<string> QueryPhrases { get; set; }
+		public List<string> SearchTerms { get; set; }
 		public string ArabicWord { get { return _word.ArabicWord; } }
 		public string Definition { get { return _word.Definition; } }
 		public int Id { get { return _word.Id; } }
@@ -19,11 +19,11 @@ namespace HansWehr
 		public MatchInfo MatchInfo { get; set; }
 		public List<OffsetInfo> Offsets { get; set; }
 
-		public WordResult(string query, RawWordResult rawWord) 
+		public WordResult(string searchTerms, RawWordResult rawWord) 
 		{
-			QueryPhrases = query.Split(' ').ToList(); 
+			SearchTerms = searchTerms.Split(' ').ToList(); 
 			_word = new Word(rawWord);
-			MatchInfo = new MatchInfo(QueryPhrases, rawWord.RawMatchInfo);
+			MatchInfo = new MatchInfo(SearchTerms, rawWord.RawMatchInfo);
 			Offsets = OffsetInfo.Parse(rawWord.Offsets);
 		}
 	}
