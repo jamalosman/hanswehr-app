@@ -54,12 +54,22 @@ namespace HansWehr.Droid
 				{
 					var word = dictionary.GetWord(wordId);
 
+					var derivedWords = dictionary.GetDerivedWords(wordId);
+					if (derivedWords != null && derivedWords.Count > 0)
+					{
+						var adapter = new ExpandableWordListAdapter(this, word, derivedWords);
+						var derivedWordList = FindViewById<ExpandableListView>(Resource.Id.DerivedWordsListView);
+
+						derivedWordList.SetAdapter(adapter);
+					}
+
 					_titleView.Text = word.ArabicWord;
 					_definitionView.Text = word.Definition;
 
 					if (!word.IsRoot && rootWordId > 0)
 					{
 						var rootWord = dictionary.GetWord(rootWordId);
+						_rootWordLinkView.Visibility = ViewStates.Visible;
 						_rootWordLinkView.Text = $"Root: {rootWord.ArabicWord}";
 						_rootWordLinkView.Click += (sender, e) =>
 						{

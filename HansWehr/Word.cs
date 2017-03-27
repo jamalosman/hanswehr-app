@@ -3,6 +3,7 @@ using SQLite;
 
 namespace HansWehr
 {
+	[Table("WordView")]
 	public class Word
 	{
 		[Column("rowid")]
