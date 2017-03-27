@@ -1,35 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using UIKit;
 
 namespace HansWehr.iOS
 {
-    public partial class ViewController : UIViewController
-    {
-        static Dictionary HansWehr = Dictionary.Instance;
+	public partial class ViewController : UIViewController
+	{
+		int count = 1;
 
-        public ViewController(IntPtr handle) : base(handle)
-        {
-        }
+		public ViewController(IntPtr handle) : base(handle)
+		{
+		}
 
-        public override void ViewDidLoad()
-        {
-            base.ViewDidLoad();
+		public override void ViewDidLoad()
+		{
+			base.ViewDidLoad();
 
-            // Perform any additional setup after loading the view, typically from a nib.
-            SearchBar.SearchButtonClicked += (sender, e) =>
-            {
-				var words = HansWehr.Query(SearchBar.Text).ToList();
-                ResultList.Source = new WordListDataSource { Words = words };
-				ResultList.ReloadData();
-            };
-        }
+			// Perform any additional setup after loading the view, typically from a nib.
+			Button.AccessibilityIdentifier = "myButton";
+			Button.TouchUpInside += delegate
+			{
+				var title = string.Format("{0} clicks!", count++);
+				Button.SetTitle(title, UIControlState.Normal);
+			};
+		}
 
-        public override void DidReceiveMemoryWarning()
-        {
-            base.DidReceiveMemoryWarning();
-            // Release any cached data, images, etc that aren't in use.		
-        }
-    }
+		public override void DidReceiveMemoryWarning()
+		{
+			base.DidReceiveMemoryWarning();
+			// Release any cached data, images, etc that aren't in use.		
+		}
+	}
 }

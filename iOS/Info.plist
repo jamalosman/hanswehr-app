@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Hans Wehr</string>
+	<string>HansWehr</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.taweel.github.hans-wehr</string>
+	<string>com.taweel.github.hanswehr</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>

@@ -1,146 +1,72 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Linq;
-using System.Xml;
-using System.Xml.Linq;
-using Lucene.Net.Analysis.Standard;
-using Store = Lucene.Net.Store;
-using Lucene.Net.Store;
-using Lucene.Net.Index;
-using Lucene.Net.Documents;
-using Lucene.Net.Search;
-using System.Diagnostics;
-using Lucene.Net.QueryParsers;
+using System.Text.RegularExpressions;
+using SQLite;
 
 namespace HansWehr
 {
-	public class Dictionary
+	public class Dictionary : IDisposable
 	{
-		static string AppFolder
+		private SQLiteConnection _database { get; set; }
+
+		const string _baseQuery = "select ArabicWord, " +
+								"Definition, " +
+								"RootWordId, " +
+								"IsRoot, " +
+								"word.rowid as Id, " +
+								"matchinfo(word,'pcnalx') as RawMatchInfo, " +
+								"offsets(word) as Offsets " +
+								"from word " +
+								"inner join wordmetadata " +
+								"on word.rowid = wordmetadata.rowid ";
+		const string _englishSearchQuery = _baseQuery + "where definition match ? ";
+		const string _arabicSearchQuery = _baseQuery + "where arabicword match ? ";
+
+		const string _arabicPattern = @"[\u0620-\u0660]+";
+
+
+		public Dictionary(IDatabaseLoader databaseLoader)
 		{
-			get { return Environment.GetFolderPath(Environment.SpecialFolder.Personal); }
+			_database = new SQLiteConnection(databaseLoader.FilePath);
 		}
 
-		string HansWehrPath = Path.Combine(AppFolder, "hanswehr.xml");
-		string IndexPath = Path.Combine(AppFolder, "index");
-		Store.Directory IndexDirectory;
-
-		private static Dictionary _instance;
-		public static Dictionary Instance
+		/// <summary>
+		/// Search the database with the specified terms.
+		/// </summary>
+		/// <param name="terms">Search terms.</param>
+		public IList<WordResult> Search(string terms)
 		{
-			get
-			{
-				if (_instance == null) return _instance = new Dictionary();
-				else return _instance;
+
+			var regex = new Regex(_arabicPattern);
+			if (regex.IsMatch(terms)) {
+				return _database
+					.Query<RawWordResult>(_arabicSearchQuery, terms)
+					.Select(raw => new WordResult(terms, raw))
+					.ToList();
+			} else {
+				var words = _database
+					.Query<RawWordResult>(_englishSearchQuery, terms)
+					.Select(raw => new WordResult(terms, raw));
+				return new OkapiBm25Ranker(words.ToList()).Rank();
 			}
 		}
 
-		Dictionary()
+		public Word GetWord(int wordId)
 		{
-			IndexDirectory = GetIndex() ?? BuildIndex();
+			return _database.Table<Word>().FirstOrDefault(word => word.Id == wordId);
 		}
 
-		Store.Directory GetIndex()
+		public List<Word> GetDerivedWords(int wordId)
 		{
-			var directory = FSDirectory.Open(IndexPath);
-			directory.EnsureOpen();
-			return directory.Directory.Exists ? directory : null;
+			return _database.Table<Word>().Where(word => word.RootWordId == wordId).ToList();
 		}
 
-		Store.Directory BuildIndex()
+		public void Dispose()
 		{
-			var dictionary = GetWords();
-			var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-			var indexDirectory = new SimpleFSDirectory(new DirectoryInfo(IndexPath));
-			var writer = new IndexWriter(indexDirectory, analyzer, IndexWriter.MaxFieldLength.LIMITED);
+			_database.Dispose();
+			_database = null;
 
-			foreach (var word in dictionary)
-			{
-				Document doc = new Document();
-				doc.Add(new Field("Arabic", word.ArabicWord, Field.Store.YES, Field.Index.NOT_ANALYZED));
-				doc.Add(new Field("Definition", word.Definition, Field.Store.YES, Field.Index.ANALYZED));
-				writer.AddDocument(doc);
-			}
-
-			writer.Optimize();
-			writer.Commit();
-			writer.Dispose();
-			return indexDirectory;
-		}
-
-		XDocument GetDictionary()
-		{
-			return GetDictionaryFromFile() ?? GetDictionaryFromResource();
-		}
-
-		XDocument GetDictionaryFromResource()
-		{
-
-			var assembly = typeof(Dictionary).GetTypeInfo().Assembly;
-			var stream = assembly.GetManifestResourceStream(assembly.GetName().Name + ".hanswehr.xml");
-			Debug.WriteLine(string.Join(",", assembly.GetManifestResourceNames()));
-			Debug.WriteLine(assembly.GetName().Name + ".hanswehr.xml");
-
-			return XDocument.Load(stream);
-
-			//var xmlString = File.ReadAllText(HansWehrPath);
-			//return XDocument.Parse(xmlString);
-		}
-
-		XDocument GetDictionaryFromFile()
-		{
-			try
-			{
-				var xmlString = File.ReadAllText(HansWehrPath);
-				return XDocument.Parse(xmlString);
-			}
-			catch (FileNotFoundException) // want to find out what exception will get thrown
-			{
-				return null;
-			}
-		}
-
-		public IEnumerable<Word> GetWords()
-		{
-			return
-				GetDictionary()
-				.Descendants()
-				.Where(element => new[] { "rootword", "subword" }.Contains(element.Name.LocalName))
-				.Select(wordElement => new Word
-				{
-					ArabicWord = wordElement.Element("arabic").Value,
-					Definition = wordElement.Element("information").Value
-				});
-		}
-
-
-
-		public IEnumerable<Word> Query(string queryString, int limit = 50)
-		{
-			var analyzer = new StandardAnalyzer(Lucene.Net.Util.Version.LUCENE_30);
-			var parser = new QueryParser(Lucene.Net.Util.Version.LUCENE_30, "Definition", analyzer);
-			var query = parser.Parse(queryString);
-			var data = new List<Word>();
-
-			using (var searcher = new IndexSearcher(IndexDirectory))
-			{
-				var hits = searcher.Search(query, limit);
-				Debug.WriteLine(hits.TotalHits + " result(s) found for query: " + query.ToString());
-				foreach (var scoreDoc in hits.ScoreDocs)
-				{
-					var document = searcher.Doc(scoreDoc.Doc);
-					data.Add(new Word()
-					{
-						ArabicWord = document.Get("Arabic"),
-						Definition = document.Get("Definition")
-					});
-				}
-			}
-			return data
-				.GroupBy(word => word.Definition)
-				.Select(g => g.First());
 		}
 	}
 }
